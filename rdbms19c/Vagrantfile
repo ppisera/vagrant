@@ -1,0 +1,36 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+var_disk1_name	= '.\u01.vdi'
+var_disk1_size	= 100
+var_disk2_name	= '.\u02.vdi'
+var_disk2_size	= 100
+var_memory_size	= 4096
+var_cpu_size	= 2
+var_vm_name		= 'ora-lnx1'
+
+Vagrant.configure("2") do |config|
+  config.vm.box = "oraclelinux/8"
+
+   config.vm.provider "virtualbox" do |vb|
+	 vb.memory = var_memory_size  # Memory size in MB.
+	 vb.cpus   = var_cpu_size     # Number of vCPUs
+	 vb.name   = var_vm_name   # VM name.
+
+    # Tell VirtualBox this VM is running on an SSD.
+         vb.customize ['storageattach', :id, '--storagectl', 'SATA Controller', '--port', '0', '--nonrotational', 'on']
+    
+	unless File.exist?(var_disk1_name)
+      vb.customize ['createhd', '--filename', var_disk1_name, '--size', var_disk1_size * 1024]
+    end
+    vb.customize ['storageattach', :id, '--storagectl', 'SATA Controller', '--port', 1, '--device', 0, '--type', 'hdd', '--nonrotational', 'on', '--medium', var_disk1_name]
+	
+	unless File.exist?(var_disk2_name)
+      vb.customize ['createhd', '--filename', var_disk2_name, '--size', var_disk2_size * 1024]
+    end
+    vb.customize ['storageattach', :id, '--storagectl', 'SATA Controller', '--port', 2, '--device', 0, '--type', 'hdd', '--nonrotational', 'on', '--medium', var_disk2_name]
+   end
+
+  config.vm.provision "shell", inline: <<-SHELL
+   sh /vagrant/scripts/setup.sh   ## ten skrypt w zamyśle uruchomi inne - aby zainstalować pełne środowisko... 
+  SHELL
+end
